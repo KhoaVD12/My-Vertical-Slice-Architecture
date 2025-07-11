@@ -1,0 +1,6 @@
+@API_Handbag_HostAddress = http://localhost:5012
+
+GET {{API_Handbag_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
