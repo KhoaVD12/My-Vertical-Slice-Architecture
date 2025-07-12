@@ -3,7 +3,7 @@
 public enum Role
 {   
     Admin = 1,
-    Modjose = 2,
-    DevOps= 3,
-    Steve=4,
+    Moderator = 2,
+    Developer = 3,
+    Member = 4,
 }

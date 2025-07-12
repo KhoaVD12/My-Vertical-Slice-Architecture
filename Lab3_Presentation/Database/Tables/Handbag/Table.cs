@@ -12,5 +12,5 @@ public class Table
     public string Color { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public int Stock { get; set; }
-    public DateOnly Release { get; set; }
+    public DateOnly ReleaseDate { get; set; }
 }

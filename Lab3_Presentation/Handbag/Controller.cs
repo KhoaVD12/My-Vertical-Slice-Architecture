@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,42 +30,53 @@ public class Controller : ControllerBase
         return Ok(handbag);
     }
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Moderator")]
     public async Task<IActionResult> Post([FromBody] Create.Payload payload)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
+        int maxId = await _context.Handbag
+            .Select(h => h.HandbagID)
+            .DefaultIfEmpty(0)
+            .MaxAsync();
+        var existBrand = await _context.Brand.FindAsync(payload.BrandId);
+        if (existBrand is null)
+        {
+            return BadRequest($"No Brand with this Id: {payload.BrandId}");
+        }
         var handbag = new Database.Tables.Handbag.Table
         {
+            HandbagID = maxId + 1,
             ModelName = payload.ModelName,
             Material = payload.Material,
             Price = payload.Price,
             Stock = payload.Stock,
-            BrandID = payload.BrandId
+            BrandID = payload.BrandId,
+            ReleaseDate= DateOnly.FromDateTime(DateTime.UtcNow),
         };
         _context.Handbag.Add(handbag);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = handbag.HandbagID }, handbag);
+        return CreatedAtAction(nameof(Get), handbag.HandbagID);
     }
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Put(int id, [FromBody] Update.Payload payload)
+    [Authorize(Roles = "Admin, Moderator")]
+    public async Task<IActionResult> Put([FromBody] Update.Payload payload)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
-        var handbag = await _context.Handbag.FindAsync(id);
+        var handbag = await _context.Handbag.FindAsync(payload.HandbagId);
         if (handbag == null)
         {
             return NotFound();
         }
         var existBrand = await _context.Brand.FindAsync(payload.BrandId);   
-        if (payload.ModelName is not null && payload.ModelName is not null)
+        if (!string.IsNullOrEmpty(payload.ModelName))
             handbag.ModelName = payload.ModelName;
-        if(payload.Material is not null && payload.Material is not null)
+        if(!string.IsNullOrEmpty(payload.Material))
             handbag.Material = payload.Material;
         if (payload.Price.HasValue)
             handbag.Price = (decimal)payload.Price;
@@ -78,11 +88,11 @@ public class Controller : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
-    [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Delete(int id)
+    [HttpDelete]
+    [Authorize(Roles = "Admin, Moderator")]
+    public async Task<IActionResult> Delete([FromBody]Delete.Parameters parameters)
     {
-        var handbag = await _context.Handbag.FindAsync(id);
+        var handbag = await _context.Handbag.FindAsync(parameters.HandbagId);
         if (handbag == null)
         {
             return NotFound();

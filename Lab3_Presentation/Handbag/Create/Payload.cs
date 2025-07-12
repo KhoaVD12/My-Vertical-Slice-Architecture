@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
 namespace Lab3_Presentation.Handbag.Create;
 
 public class Payload
