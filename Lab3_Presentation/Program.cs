@@ -1,13 +1,29 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OData.Edm;
+using Microsoft.OData.ModelBuilder;
 using System.Security.Claims;
 using System.Text;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+static IEdmModel GetEdmModel()
+{
+    ODataConventionModelBuilder oDataBuilder = new();
+    oDataBuilder.EntitySet<Lab3_Presentation.Database.Tables.Handbag.Table>("Handbags");
+    return oDataBuilder.GetEdmModel();
+}
+builder.Services.AddControllers().AddOData(options =>
+{
+    options.AddRouteComponents("odata", GetEdmModel())
+           .Select()
+           .Filter()
+           .OrderBy()
+           .Expand()
+           .Count();
+});
 builder.Services.AddControllers();
 builder.Services.AddDbContext<Lab3_Presentation.Database.Context>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lab3_Presentation.Handbag;
@@ -103,19 +104,11 @@ public class Controller : ControllerBase
     }
     [HttpGet("search")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Search([FromQuery] string modelName)
+    [EnableQuery]
+    public IActionResult GetOdata()
     {
-        if (string.IsNullOrEmpty(modelName))
-        {
-            return BadRequest("Model name is required.");
-        }
-        var handbags = await _context.Handbag
-            .Where(h => h.ModelName.Contains(modelName, StringComparison.OrdinalIgnoreCase))
-            .ToListAsync();
-        if (!handbags.Any())
-        {
-            return NotFound("No handbags found with the specified model name.");
-        }
+        var handbags = _context.Handbag.AsQueryable();
         return Ok(handbags);
     }
+
 }
